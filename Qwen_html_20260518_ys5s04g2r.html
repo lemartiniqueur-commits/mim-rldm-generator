@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Générateur Visuels MIM · RLDM — V2.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;background:#0D0D0D;color:#E8E3DA;min-height:100vh;display:flex;flex-direction:column}
+/* TOPBAR */
+.topbar{background:#161616;border-bottom:1px solid rgba(255,255,255,0.07);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{width:32px;height:32px;background:#C0392B;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:12px;color:#F5F0E8;letter-spacing:1px;flex-shrink:0}
+.brand-name{font-size:13px;font-weight:700;color:#C0392B;letter-spacing:.05em;text-transform:uppercase}
+.brand-sub{font-size:10px;color:#555}
+.version-badge{background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.3);color:#D4AF37;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;letter-spacing:.05em}
+/* LAYOUT */
+.app-body{flex:1;display:grid;grid-template-columns:380px 1fr;overflow:hidden;height:calc(100vh - 56px)}
+@media(max-width:860px){.app-body{grid-template-columns:1fr;height:auto;overflow:auto}}
+/* SIDEBAR */
+.sidebar{background:#161616;border-right:1px solid rgba(255,255,255,0.07);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+/* SECTIONS */
+.s-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#D4AF37;margin-bottom:8px}
+/* TABS */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:#0D0D0D;padding:3px;border-radius:9px}
+.tab{padding:7px 4px;border:none;background:transparent;color:#666;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;border-radius:7px;cursor:pointer;transition:all .18s;text-align:center}
+.tab:hover{background:#222;color:#ccc}
+.tab.on{background:#C0392B;color:#fff}
+/* FIELDS */
+.panel{display:none;flex-direction:column;gap:10px}
+.panel.on{display:flex}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:#777;font-weight:500}
+.field input,.field textarea,.field select{background:#1E1E1E;border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:8px 11px;color:#E8E3DA;font-family:'Inter',sans-serif;font-size:12px;transition:border-color .18s;width:100%}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:#C0392B}
+.field textarea{resize:vertical;min-height:66px;line-height:1.5}
+.field select option{background:#1E1E1E}
+.sep{height:1px;background:rgba(255,255,255,.06)}
+/* COLOR PALETTE */
+.palette-section{display:flex;flex-direction:column;gap:8px}
+.palette-group{display:flex;flex-direction:column;gap:5px}
+.palette-group-title{font-size:10px;color:#555;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.palette-row{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;position:relative;flex-shrink:0}
+.swatch:hover{transform:scale(1.18)}
+.swatch.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.swatch.active{border-color:rgba(255,255,255,.6)}
+.color-code{font-family:monospace;font-size:11px;color:#888;background:#1E1E1E;border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:5px 10px;letter-spacing:.05em;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.color-code:hover{background:#252525;color:#ccc}
+.color-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+/* MEDIA UPLOAD */
+.upload-zone{border:1px dashed rgba(255,255,255,.15);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.upload-zone:hover{border-color:rgba(192,57,43,.5);background:rgba(192,57,43,.04)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone .uz-icon{font-size:22px;margin-bottom:4px}
+.upload-zone .uz-text{font-size:11px;color:#666;line-height:1.4}
+.upload-zone .uz-text strong{color:#999}
+.media-thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.media-thumb{width:52px;height:52px;border-radius:6px;object-fit:cover;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .15s;position:relative}
+.media-thumb:hover{transform:scale(1.08);border-color:#C0392B}
+.media-thumb.selected{border-color:#D4AF37;box-shadow:0 0 0 2px rgba(212,175,55,.3)}
+.thumb-wrap{position:relative;display:inline-block}
+.thumb-del{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#C0392B;border-radius:50%;font-size:8px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;line-height:1}
+/* LOGO POSITION */
+.pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pos-btn{padding:8px 4px;background:#1E1E1E;border:1px solid rgba(255,255,255,.09);border-radius:6px;color:#666;font-size:10px;cursor:pointer;text-align:center;transition:all .15s;font-family:'Inter',sans-serif}
+.pos-btn:hover{background:#252525;color:#aaa}
+.pos-btn.on{background:#2A1A0A;border-color:rgba(212,175,55,.4);color:#D4AF37}
+/* BUTTONS */
+.btn-main{width:100%;padding:13px;background:#C0392B;color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-main:hover{background:#A93226;box-shadow:0 4px 16px rgba(192,57,43,.4)}
+.btn-main:active{transform:scale(.98)}
+.btn-row{display:flex;gap:7px}
+.btn-sec{flex:1;padding:9px;background:#1E1E1E;border:1px solid rgba(255,255,255,.09);border-radius:7px;color:#888;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-sec:hover{background:#252525;color:#ccc}
+.tip{background:#191919;border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:9px 12px;font-size:10px;color:#555;line-height:1.6}
+.tip strong{color:#777}
+/* PREVIEW */
+.preview-pane{display:flex;flex-direction:column;background:#0A0A0A;overflow:hidden}
+.preview-header{background:#161616;border-bottom:1px solid rgba(255,255,255,.07);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;flex-wrap:wrap}
+.preview-header h2{font-size:12px;font-weight:600;color:#666}
+.fmt-group{display:flex;gap:5px;flex-wrap:wrap}
+.fmt-btn{padding:5px 11px;background:transparent;border:1px solid rgba(255,255,255,.09);border-radius:999px;color:#555;font-size:10px;font-weight:600;cursor:pointer;transition:all .18s;font-family:'Inter',sans-serif}
+.fmt-btn:hover{border-color:#444;color:#aaa}
+.fmt-btn.on{background:#222;border-color:#555;color:#E8E3DA}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:28px;overflow:auto}
+canvas#cv{box-shadow:0 20px 60px rgba(0,0,0,.75);border-radius:4px;max-width:100%;max-height:calc(100vh - 160px)}
+/* NOTIF */
+#notif{position:fixed;bottom:20px;right:20px;background:#252525;border:1px solid rgba(255,255,255,.1);color:#E8E3DA;padding:9px 18px;border-radius:9px;font-size:12px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:9999;transform:translateY(70px);opacity:0;transition:all .3s ease}
+#notif.show{transform:translateY(0);opacity:1}
+/* ACCORDION */
+.acc-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:6px 0;user-select:none}
+.acc-header:hover .acc-arrow{color:#ccc}
+.acc-arrow{color:#555;font-size:12px;transition:transform .2s}
+.acc-header.open .acc-arrow{transform:rotate(180deg)}
+.acc-body{display:none;flex-direction:column;gap:10px;padding-top:4px}
+.acc-body.open{display:flex}
+</style>
+</head>
+<body>
+<header class="topbar">
+<div class="brand">
+<div class="brand-logo">MIM</div>
+<div>
+<div class="brand-name">Générateur Visuels</div>
+<div class="brand-sub">MIM · RLDM · Cellule Communication</div>
+</div>
+</div>
+<span class="version-badge">V 2.1</span>
+</header>
+<div class="app-body">
+<aside class="sidebar">
+<!-- TEMPLATES -->
+<div>
+<div class="s-lbl">Template</div>
+<div class="tabs">
+<button class="tab on" onclick="switchTpl('evenement',this)">📅 Événement</button>
+<button class="tab" onclick="switchTpl('citation',this)">💬 Citation</button>
+<button class="tab" onclick="switchTpl('actu',this)">📡 Actu RLDM</button>
+<button class="tab" onclick="switchTpl('modumim',this)">🎙 Mo du MIM</button>
+</div>
+</div>
+<!-- EVENEMENT -->
+<div id="p-evenement" class="panel on">
+<div class="s-lbl" style="margin-bottom:0">Contenu</div>
+<div class="field"><label>Surtitre</label><input id="ev-sur" value="Commémoration officielle" oninput="draw()"></div>
+<div class="field"><label>Titre principal</label><textarea id="ev-titre" oninput="draw()">22 Mè — Fèt Abolisyon</textarea></div>
+<div class="field"><label>Sous-titre</label><textarea id="ev-sub" oninput="draw()">Le MIM vous invite à commémorer ensemble la mémoire du 22 mai 1848.</textarea></div>
+<div class="field"><label>Date</label><input id="ev-date" value="22 Mai 2026" oninput="draw()"></div>
+<div class="field"><label>Heure</label><input id="ev-heure" value="09h00" oninput="draw()"></div>
+<div class="field"><label>Lieu</label><input id="ev-lieu" value="Place de la Savane, Fort-de-France" oninput="draw()"></div>
+<div class="field"><label>Organisateur</label><input id="ev-org" value="MIM — Mouvement Indépendantiste Martiniquais" oninput="draw()"></div>
+</div>
+<!-- CITATION -->
+<div id="p-citation" class="panel">
+<div class="field"><label>Texte</label><textarea id="cit-txt" oninput="draw()">La souveraineté de Martinique, ce n'est pas un slogan. C'est le droit du peuple martiniquais de décider de son propre destin.</textarea></div>
+<div class="field"><label>Auteur</label><input id="cit-aut" value="Alfred Marie-Jeanne" oninput="draw()"></div>
+<div class="field"><label>Titre / Fonction</label><input id="cit-fn" value="Fondateur du MIM" oninput="draw()"></div>
+<div class="field"><label>Fond</label>
+<select id="cit-fond" onchange="draw()">
+<option value="clair">Fond clair (beige)</option>
+<option value="sombre">Fond sombre (noir)</option>
+</select>
+</div>
+</div>
+<!-- ACTU -->
+<div id="p-actu" class="panel">
+<div class="field"><label>Tag</label><input id="ac-tag" value="EXCLUSIF" oninput="draw()"></div>
+<div class="field"><label>Titre</label><textarea id="ac-titre" oninput="draw()">Délibéré du Tribunal : RLDM obtient gain de cause contre la mairie</textarea></div>
+<div class="field"><label>Corps</label><textarea id="ac-corps" oninput="draw()">Le tribunal judiciaire de Martinique a rendu son délibéré. Retrouvez l'analyse complète sur RLDM 90.8 FM.</textarea></div>
+<div class="field"><label>Date</label><input id="ac-date" value="18 Mai 2026" oninput="draw()"></div>
+<div class="field"><label>Hashtags</label><input id="ac-hash" value="#RLDM #Martinique #LibertéDExpression" oninput="draw()"></div>
+</div>
+<!-- MO DU MIM -->
+<div id="p-modumim" class="panel">
+<div class="field"><label>Numéro</label><input id="mm-num" value="ÉP. 12" oninput="draw()"></div>
+<div class="field"><label>Titre</label><textarea id="mm-titre" oninput="draw()">Cadenas RLDM : Quand un maire se prend pour l'ARCOM</textarea></div>
+<div class="field"><label>Description</label><textarea id="mm-desc" oninput="draw()">Analyse complète du bras de fer juridique entre RLDM et la mairie de Rivière-Pilote.</textarea></div>
+<div class="field"><label>Date</label><input id="mm-date" value="18 Mai 2026" oninput="draw()"></div>
+<div class="field"><label>Intervenants</label><input id="mm-hosts" value="RLDM · Radio Lévé Doubout Matinik" oninput="draw()"></div>
+</div>
+<div class="sep"></div>
+<!-- CHARTE COULEURS MIM -->
+<div>
+<div class="acc-header open" onclick="toggleAcc(this)">
+<span class="s-lbl" style="margin:0">🎨 Charte Couleurs MIM</span>
+<span class="acc-arrow">▼</span>
+</div>
+<div class="acc-body open">
+<div class="palette-section">
+<div class="palette-group">
+<div class="palette-group-title">Couleurs officielles MIM</div>
+<div class="palette-row" id="mim-swatches"></div>
+</div>
+<div class="palette-group">
+<div class="palette-group-title">Drapeau Martinique (Rouge-Vert-Noir)</div>
+<div class="palette-row" id="drp-swatches"></div>
+</div>
+<div class="palette-group">
+<div class="palette-group-title">Fonds & Neutres</div>
+<div class="palette-row" id="neu-swatches"></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:5px" id="color-codes"></div>
+<div class="tip">Clique une couleur pour copier son code hex. <strong>Clique 2× pour l'appliquer</strong> à l'accent du template en cours.</div>
+</div>
+</div>
+<div class="sep"></div>
+<!-- MÉDIAS -->
+<div>
+<div class="acc-header open" onclick="toggleAcc(this)">
+<span class="s-lbl" style="margin:0">🖼 Médias (Logo, Photo, Image)</span>
+<span class="acc-arrow">▼</span>
+</div>
+<div class="acc-body open">
+<div class="upload-zone" id="upload-zone">
+<input type="file" id="file-input" accept="image/*" multiple onchange="handleUpload(event)">
+<div class="uz-icon">📁</div>
+<div class="uz-text"><strong>Glisse ou clique</strong> pour ajouter<br>Logo, photo, image (PNG, JPG, SVG)</div>
+</div>
+<div class="media-thumbs" id="media-thumbs"></div>
+<!-- Position logo -->
+<div id="logo-controls" style="display:none">
+<div class="field" style="margin-top:4px">
+<label>Position du média sélectionné</label>
+<div class="pos-grid" id="pos-grid">
+<button class="pos-btn" onclick="setPos('tl',this)">↖ H.G.</button>
+<button class="pos-btn" onclick="setPos('tc',this)">↑ H.C.</button>
+<button class="pos-btn" onclick="setPos('tr',this)">↗ H.D.</button>
+<button class="pos-btn" onclick="setPos('ml',this)">← M.G.</button>
+<button class="pos-btn" onclick="setPos('mc',this)">⊙ Centre</button>
+<button class="pos-btn" onclick="setPos('mr',this)">→ M.D.</button>
+<button class="pos-btn" onclick="setPos('bl',this)">↙ B.G.</button>
+<button class="pos-btn" onclick="setPos('bc',this)">↓ B.C.</button>
+<button class="pos-btn on" onclick="setPos('br',this)">↘ B.D.</button>
+</div>
+</div>
+<div class="field">
+<label>Taille du média (% de la largeur)</label>
+<input type="range" id="media-size" min="5" max="60" value="20" oninput="draw()" style="accent-color:#C0392B">
+<span id="media-size-val" style="font-size:10px;color:#666;margin-top:2px">20%</span>
+</div>
+<div class="field">
+<label>Opacité</label>
+<input type="range" id="media-opacity" min="10" max="100" value="100" oninput="draw()" style="accent-color:#C0392B">
+<span id="media-opacity-val" style="font-size:10px;color:#666;margin-top:2px">100%</span>
+</div>
+</div>
+</div>
+</div>
+<div class="sep"></div>
+<!-- EXPORT -->
+<div>
+<div class="s-lbl">Export</div>
+<button class="btn-main" onclick="exportPNG(2)">⬇ Télécharger PNG haute résolution</button>
+<div style="height:7px"></div>
+<div class="btn-row">
+<button class="btn-sec" onclick="exportPNG(1)">⬇ Export standard</button>
+<button class="btn-sec" onclick="resetForm()">↺ Reset</button>
+</div>
+</div>
+<div class="tip" style="margin-bottom:8px">
+<strong>💡 Astuce :</strong> Pour une affiche imprimable, utilise <em>Ctrl+P → Enregistrer en PDF</em> depuis le navigateur. Format A4 = choisir le format "Affiche" avant d'exporter.
+</div>
+</aside>
+<!-- PREVIEW -->
+<main class="preview-pane">
+<div class="preview-header">
+<h2>Aperçu en direct</h2>
+<div class="fmt-group">
+<button class="fmt-btn on" onclick="setFmt('carre',this)">⬛ Carré</button>
+<button class="fmt-btn" onclick="setFmt('story',this)">▯ Story</button>
+<button class="fmt-btn" onclick="setFmt('affiche',this)">📄 Affiche</button>
+<button class="fmt-btn" onclick="setFmt('banner',this)">▬ Bannière</button>
+</div>
+</div>
+<div class="canvas-wrap">
+<canvas id="cv"></canvas>
+</div>
+</main>
+</div>
+<div id="notif"></div>
+<script>
+// ── CHARTE COULEURS MIM ──
+const PALETTE = {
+mim: [
+{ hex:'#C0392B', name:'Rouge MIM (principal)' },
+{ hex:'#922B21', name:'Rouge MIM (foncé)' },
+{ hex:'#E74C3C', name:'Rouge MIM (vif)' },
+{ hex:'#D4AF37', name:'Or MIM (accent)' },
+{ hex:'#F1C40F', name:'Jaune MIM (clair)' },
+{ hex:'#F5F0E8', name:'Blanc cassé MIM' },
+{ hex:'#FFFFFF', name:'Blanc pur' },
+{ hex:'#000000', name:'Noir MIM' },
+],
+drp: [
+{ hex:'#C0392B', name:'Rouge drapeau Martinique' },
+{ hex:'#1A5C2A', name:'Vert drapeau Martinique' },
+{ hex:'#0D0D0D', name:'Noir drapeau Martinique' },
+{ hex:'#2ECC71', name:'Vert clair (accent)' },
+],
+neu: [
+{ hex:'#0D0D0D', name:'Fond noir profond' },
+{ hex:'#161616', name:'Surface sombre' },
+{ hex:'#1E1E1E', name:'Surface intermédiaire' },
+{ hex:'#2D2D2D', name:'Surface claire' },
+{ hex:'#888880', name:'Texte atténué' },
+{ hex:'#E8E3DA', name:'Texte principal (sombre)' },
+]
+};
+let selectedColor = null;
+let accentColor = '#C0392B'; // Couleur d'accent dynamique
+let clickTimer = null;
+let clickCount = 0;
+function buildPalette() {
+['mim','drp','neu'].forEach(group => {
+const container = document.getElementById(group+'-swatches');
+PALETTE[group].forEach(c => {
+const s = document.createElement('div');
+s.className = 'swatch';
+s.style.background = c.hex;
+s.title = c.name + ' — ' + c.hex;
+s.dataset.hex = c.hex;
+s.dataset.name = c.name;
+s.addEventListener('click', () => handleSwatchClick(c.hex, c.name, s));
+container.appendChild(s);
+});
+});
+// Build code list
+const codes = document.getElementById('color-codes');
+const allColors = [...PALETTE.mim, ...PALETTE.drp, ...PALETTE.neu];
+const unique = allColors.filter((c,i,a)=>a.findIndex(x=>x.hex===c.hex)===i);
+unique.forEach(c => {
+const el = document.createElement('div');
+el.className = 'color-code';
+el.innerHTML = `<div class="color-dot" style="background:${c.hex};border:1px solid rgba(255,255,255,.1)"></div>${c.hex} <span style="color:#444;font-size:9px;flex:1;font-family:'Inter';letter-spacing:0">${c.name}</span><span style="color:#555;font-size:9px">copier</span>`;
+el.addEventListener('click', () => {
+navigator.clipboard.writeText(c.hex).catch(()=>{});
+showNotif('📋 ' + c.hex + ' copié !');
+});
+codes.appendChild(el);
+});
+}
+function handleSwatchClick(hex, name, el) {
+document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+el.classList.add('active');
+selectedColor = hex;
+navigator.clipboard.writeText(hex).catch(()=>{});
+clickCount++;
+if(clickCount === 1) {
+clickTimer = setTimeout(() => {
+clickCount = 0;
+showNotif('📋 ' + hex + ' copié !');
+}, 300); // 300ms window for double click
+} else {
+clearTimeout(clickTimer);
+clickCount = 0;
+accentColor = hex;
+showNotif('🎨 Accent appliqué : ' + hex);
+draw();
+}
+}
+// ── STATE ──
+let tpl = 'evenement';
+let fmt = 'carre';
+const FORMATS = { carre:{w:1080,h:1080}, story:{w:1080,h:1920}, affiche:{w:1240,h:1754}, banner:{w:1200,h:630} };
+const DSCALE = 0.48;
+// Media state
+let mediaItems = []; // {id, img, name, pos:'br', size:20, opacity:100}
+let selectedMedia = null;
+let mediaPos = 'br';
+function g(id){ const e=document.getElementById(id); return e?e.value:''; }
+// ── ACCORDION ──
+function toggleAcc(header) {
+header.classList.toggle('open');
+const body = header.nextElementSibling;
+body.classList.toggle('open');
+}
+// ── SWITCH TEMPLATE ──
+function switchTpl(t, btn) {
+tpl = t;
+document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+document.getElementById('p-'+t).classList.add('on');
+btn.classList.add('on');
+draw();
+}
+// ── FORMAT ──
+function setFmt(f, btn) {
+fmt = f;
+document.querySelectorAll('.fmt-btn').forEach(b=>b.classList.remove('on'));
+btn.classList.add('on');
+draw();
+}
+// ── MEDIA UPLOAD ──
+function handleUpload(e) {
+const files = Array.from(e.target.files);
+files.forEach(file => {
+const reader = new FileReader();
+reader.onload = ev => {
+const img = new Image();
+img.onload = () => {
+const id = Date.now() + Math.random();
+mediaItems.push({ id, img, name: file.name, pos:'br', size:20, opacity:100 });
+renderThumbs();
+if (!selectedMedia) { selectedMedia = mediaItems[mediaItems.length-1]; updateMediaControls(); }
+draw();
+};
+img.src = ev.target.result;
+};
+reader.readAsDataURL(file);
+});
+e.target.value = '';
+}
+function renderThumbs() {
+const container = document.getElementById('media-thumbs');
+container.innerHTML = '';
+mediaItems.forEach(item => {
+const wrap = document.createElement('div');
+wrap.className = 'thumb-wrap';
+const img = document.createElement('img');
+img.className = 'media-thumb' + (selectedMedia && selectedMedia.id===item.id?' selected':'');
+img.src = item.img.src;
+img.title = item.name;
+img.onclick = () => { selectedMedia = item; updateMediaControls(); renderThumbs(); };
+const del = document.createElement('button');
+del.className = 'thumb-del';
+del.textContent = '×';
+del.onclick = (e) => { e.stopPropagation(); mediaItems = mediaItems.filter(m=>m.id!==item.id); if(selectedMedia&&selectedMedia.id===item.id) selectedMedia=null; renderThumbs(); updateMediaControls(); draw(); };
+wrap.appendChild(img);
+wrap.appendChild(del);
+container.appendChild(wrap);
+});
+document.getElementById('logo-controls').style.display = mediaItems.length>0?'block':'none';
+}
+function updateMediaControls() {
+if (!selectedMedia) return;
+document.getElementById('media-size').value = selectedMedia.size;
+document.getElementById('media-size-val').textContent = selectedMedia.size + '%';
+document.getElementById('media-opacity').value = selectedMedia.opacity;
+document.getElementById('media-opacity-val').textContent = selectedMedia.opacity + '%';
+document.querySelectorAll('.pos-btn').forEach(b=>b.classList.remove('on'));
+const pb = document.querySelector('.pos-btn[onclick*="\''+selectedMedia.pos+'\'"]');
+if(pb) pb.classList.add('on');
+}
+document.getElementById('media-size').oninput = function() {
+document.getElementById('media-size-val').textContent = this.value + '%';
+if(selectedMedia) { selectedMedia.size = parseInt(this.value); draw(); }
+};
+document.getElementById('media-opacity').oninput = function() {
+document.getElementById('media-opacity-val').textContent = this.value + '%';
+if(selectedMedia) { selectedMedia.opacity = parseInt(this.value); draw(); }
+};
+function setPos(pos, btn) {
+mediaPos = pos;
+if(selectedMedia) selectedMedia.pos = pos;
+document.querySelectorAll('.pos-btn').forEach(b=>b.classList.remove('on'));
+btn.classList.add('on');
+draw();
+}
+// ── DRAW MEDIA ──
+function drawMedia(ctx, W, H) {
+mediaItems.forEach(item => {
+const sizePx = W * (item.size / 100);
+const ratio = item.img.width / item.img.height;
+const iw = sizePx;
+const ih = sizePx / ratio;
+const pad = W * 0.05;
+let x, y;
+const pos = item.pos;
+if      (pos==='tl') { x=pad;          y=pad; }
+else if (pos==='tc') { x=(W-iw)/2;     y=pad; }
+else if (pos==='tr') { x=W-iw-pad;     y=pad; }
+else if (pos==='ml') { x=pad;          y=(H-ih)/2; }
+else if (pos==='mc') { x=(W-iw)/2;     y=(H-ih)/2; }
+else if (pos==='mr') { x=W-iw-pad;     y=(H-ih)/2; }
+else if (pos==='bl') { x=pad;          y=H-ih-pad; }
+else if (pos==='bc') { x=(W-iw)/2;     y=H-ih-pad; }
+else                 { x=W-iw-pad;     y=H-ih-pad; } // br
+ctx.save();
+ctx.globalAlpha = item.opacity / 100;
+ctx.drawImage(item.img, x, y, iw, ih);
+ctx.restore();
+});
+}
+// ── TEXT WRAP ──
+function wrapText(ctx, text, x, y, maxW, lh) {
+const words = text.split(' ');
+let line = '', lines = [];
+for (const w of words) {
+const t = line ? line+' '+w : w;
+if(ctx.measureText(t).width > maxW && line) { lines.push(line); line=w; } else line=t;
+}
+if(line) lines.push(line);
+lines.forEach((l,i) => ctx.fillText(l, x, y+i*lh));
+return lines.length;
+}
+function wrapLines(ctx, text, maxW) {
+const words = text.split(' ');
+let line='', lines=[];
+for (const w of words) {
+const t = line ? line+' '+w : w;
+if(ctx.measureText(t).width > maxW && line) { lines.push(line); line=w; } else line=t;
+}
+if(line) lines.push(line);
+return lines;
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+// ── MAIN DRAW ──
+function draw() {
+const cv = document.getElementById('cv');
+const {w,h} = FORMATS[fmt];
+cv.width=w; cv.height=h;
+cv.style.width=(w*DSCALE)+'px'; cv.style.height=(h*DSCALE)+'px';
+const ctx = cv.getContext('2d');
+ctx.clearRect(0,0,w,h);
+if(tpl==='evenement') drawEvenement(ctx,w,h);
+else if(tpl==='citation') drawCitation(ctx,w,h);
+else if(tpl==='actu') drawActu(ctx,w,h);
+else if(tpl==='modumim') drawMoMIM(ctx,w,h);
+drawMedia(ctx,w,h);
+}
+// ── TEMPLATE: EVENEMENT ──
+function drawEvenement(ctx,W,H){
+const p=W*.072;
+const bg=ctx.createLinearGradient(0,0,W*.3,H);
+bg.addColorStop(0,'#0D0D0D'); bg.addColorStop(.6,'#1A0A08'); bg.addColorStop(1,'#2C0F0F');
+ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+const glow=ctx.createRadialGradient(W*.15,H*.85,0,W*.15,H*.85,W*.55);
+glow.addColorStop(0,accentColor+'24'); glow.addColorStop(1,'rgba(0,0,0,0)');
+ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+// Left bar - tri-color (Martinique flag)
+ctx.fillStyle='#C0392B'; ctx.fillRect(0,0,W*.016,H*.33);
+ctx.fillStyle='#1A5C2A'; ctx.fillRect(0,H*.33,W*.016,H*.34);
+ctx.fillStyle='#0D0D0D'; ctx.fillRect(0,H*.67,W*.016,H*.33);
+// Org
+ctx.fillStyle='#D4AF37'; ctx.font=`600 ${W*.021}px Inter,sans-serif`; ctx.letterSpacing='3px';
+ctx.fillText((g('ev-org')||'MIM').toUpperCase().substring(0,55),p*1.4,p*1.05); ctx.letterSpacing='0px';
+// Date badge
+const ds=g('ev-date')||'22 Mai 2026';
+ctx.font=`700 ${W*.022}px Inter,sans-serif`;
+const dw=ctx.measureText(ds.toUpperCase()).width+W*.038, dh=W*.052, dx=W-p*1.4-dw, dy=p*.8;
+roundRect(ctx,dx,dy,dw,dh,5); ctx.fillStyle=accentColor; ctx.fill();
+ctx.fillStyle='#fff'; ctx.font=`700 ${W*.022}px Inter,sans-serif`;
+ctx.fillText(ds.toUpperCase(),dx+W*.019,dy+dh*.68);
+// Surtitre
+ctx.fillStyle=accentColor; ctx.font=`700 ${W*.023}px Inter,sans-serif`; ctx.letterSpacing='4px';
+ctx.fillText((g('ev-sur')||'').toUpperCase(),p*1.4,H*.42); ctx.letterSpacing='0px';
+ctx.fillStyle='#D4AF37'; ctx.fillRect(p*1.4,H*.448,W*.075,3);
+// Titre
+ctx.fillStyle='#F5F0E8'; ctx.font=`900 ${W*.088}px 'Playfair Display',Georgia,serif`;
+const titreLines=(g('ev-titre')||'').split('\n');
+let ty=H*.52;
+for(const line of titreLines){
+const ls=wrapLines(ctx,line,W-p*2.8);
+ls.forEach(l=>{ctx.fillText(l,p*1.4,ty);ty+=W*.1;});
+}
+ctx.fillStyle='rgba(245,240,232,.58)'; ctx.font=`400 ${W*.031}px Inter,sans-serif`;
+const sl=wrapLines(ctx,g('ev-sub')||'',W-p*2.8);
+sl.forEach((l,i)=>ctx.fillText(l,p*1.4,ty+W*.02+i*W*.041));
+// Footer
+ctx.strokeStyle='rgba(245,240,232,.09)'; ctx.lineWidth=2;
+ctx.beginPath(); ctx.moveTo(p*1.4,H*.875); ctx.lineTo(W-p,H*.875); ctx.stroke();
+ctx.fillStyle='#D4AF37'; ctx.font=`700 ${W*.018}px Inter,sans-serif`; ctx.letterSpacing='2px';
+ctx.fillText('LIEU',p*1.4,H*.915); ctx.letterSpacing='0px';
+ctx.fillStyle='rgba(245,240,232,.78)'; ctx.font=`500 ${W*.025}px Inter,sans-serif`;
+ctx.fillText(g('ev-lieu')||'',p*1.4,H*.955);
+// Heure
+const heure=g('ev-heure')||'09h00';
+ctx.font=`700 ${W*.046}px 'Playfair Display',Georgia,serif`;
+const hw=ctx.measureText(heure).width+W*.05,hh=W*.072,hx=W-p-hw,hy=H*.896;
+roundRect(ctx,hx,hy,hw,hh,6); ctx.strokeStyle='rgba(212,175,55,.38)'; ctx.lineWidth=2; ctx.stroke();
+ctx.fillStyle='rgba(212,175,55,.11)'; ctx.fill();
+ctx.fillStyle='#D4AF37'; ctx.font=`700 ${W*.046}px 'Playfair Display',Georgia,serif`;
+ctx.fillText(heure,hx+W*.025,hy+hh*.68);
+}
+// ── TEMPLATE: CITATION ──
+function drawCitation(ctx,W,H){
+const dark=g('cit-fond')==='sombre'; const p=W*.08;
+if(dark){const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0D0D0D');bg.addColorStop(1,'#1C0C0A');ctx.fillStyle=bg;}
+else{const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#F5F0E8');bg.addColorStop(1,'#EDE5D8');ctx.fillStyle=bg;}
+ctx.fillRect(0,0,W,H);
+ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W*.28,0);ctx.lineTo(0,H*.28);ctx.closePath();ctx.fillStyle=accentColor;ctx.globalAlpha=.88;ctx.fill();ctx.restore();
+ctx.save();ctx.beginPath();ctx.moveTo(W,H);ctx.lineTo(W*.76,H);ctx.lineTo(W,H*.76);ctx.closePath();ctx.fillStyle='#D4AF37';ctx.globalAlpha=.32;ctx.fill();ctx.restore();
+// Flag stripe bottom
+ctx.fillStyle='#C0392B'; ctx.fillRect(0,H-.016*W*3,W,.016*W);
+ctx.fillStyle='#1A5C2A'; ctx.fillRect(0,H-.016*W*2,W,.016*W);
+ctx.fillStyle='#0D0D0D'; ctx.fillRect(0,H-.016*W,W,.016*W);
+ctx.fillStyle=dark?accentColor+'4D':accentColor+'33'; ctx.font=`900 ${W*.2}px 'Playfair Display',Georgia,serif`;
+ctx.fillText('"',p,H*.27);
+ctx.fillStyle=dark?'#F5F0E8':'#1A0A08'; ctx.font=`700 ${W*.054}px 'Playfair Display',Georgia,serif`;
+const ls2=wrapLines(ctx,g('cit-txt')||'',W-p*2);
+const lh2=W*.066,totalH=ls2.length*lh2,sy=(H-totalH)/2+W*.02;
+ls2.forEach((l,i)=>ctx.fillText(l,p,sy+i*lh2));
+ctx.fillStyle=accentColor; ctx.fillRect(p,H*.78,W*.065,3);
+ctx.fillStyle=accentColor; ctx.font=`700 ${W*.028}px Inter,sans-serif`; ctx.letterSpacing='2px';
+ctx.fillText((g('cit-aut')||'').toUpperCase(),p,H*.845); ctx.letterSpacing='0px';
+ctx.fillStyle=dark?'rgba(245,240,232,.42)':'#888'; ctx.font=`400 ${W*.024}px Inter,sans-serif`;
+ctx.fillText(g('cit-fn')||'',p,H*.895);
+ctx.fillStyle=accentColor; ctx.font=`900 ${W*.038}px 'Playfair Display',Georgia,serif`; ctx.textAlign='right';
+ctx.fillText('MIM',W-p,H*.86);
+ctx.fillStyle=dark?'rgba(245,240,232,.3)':'#999'; ctx.font=`400 ${W*.02}px Inter,sans-serif`;
+ctx.fillText('Martinique',W-p,H*.91); ctx.textAlign='left';
+}
+// ── TEMPLATE: ACTU RLDM ──
+function drawActu(ctx,W,H){
+const p=W*.065;
+ctx.fillStyle='#0D0D0D'; ctx.fillRect(0,0,W,H);
+const glow=ctx.createLinearGradient(0,H*.6,0,H);
+glow.addColorStop(0,'rgba(0,0,0,0)'); glow.addColorStop(1,accentColor+'17');
+ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+ctx.fillStyle=accentColor; ctx.fillRect(0,0,W,H*.115);
+ctx.fillStyle='#fff'; ctx.font=`900 ${W*.062}px 'Playfair Display',Georgia,serif`;
+ctx.fillText('RLDM',p,H*.082);
+ctx.fillStyle='rgba(255,255,255,.72)'; ctx.font=`500 ${W*.019}px Inter,sans-serif`; ctx.textAlign='right'; ctx.letterSpacing='1px';
+ctx.fillText('RADIO LÉVÉ DOUBOUT MATINIK',W-p,H*.063);
+ctx.fillText('90.8 · 91.0 · 97.5 FM',W-p,H*.092); ctx.textAlign='left'; ctx.letterSpacing='0px';
+// Tag
+const tagT=(g('ac-tag')||'INFO').toUpperCase();
+ctx.beginPath(); ctx.arc(p+W*.014,H*.17+W*.025,W*.008,0,Math.PI*2); ctx.fillStyle='#E74C3C'; ctx.fill();
+ctx.font=`700 ${W*.024}px Inter,sans-serif`; ctx.letterSpacing='3px';
+const tw2=ctx.measureText(tagT).width+W*.055,th2=W*.048;
+roundRect(ctx,p,H*.152,tw2,th2,4); ctx.strokeStyle=accentColor+'61'; ctx.lineWidth=2; ctx.stroke();
+ctx.fillStyle=accentColor+'1C'; ctx.fill();
+ctx.fillStyle=accentColor; ctx.fillText(tagT,p+W*.033,H*.152+th2*.68); ctx.letterSpacing='0px';
+// Titre
+ctx.fillStyle='#F5F0E8'; ctx.font=`900 ${W*.065}px 'Playfair Display',Georgia,serif`;
+const lsA=wrapLines(ctx,g('ac-titre')||'',W-p*2);
+let tyA=H*.3;
+lsA.forEach(l=>{ctx.fillText(l,p,tyA);tyA+=W*.08;});
+// Corps
+ctx.fillStyle='rgba(245,240,232,.52)'; ctx.font=`400 ${W*.029}px Inter,sans-serif`;
+const lsC=wrapLines(ctx,g('ac-corps')||'',W-p*2);
+let tyC=tyA+W*.025;
+lsC.slice(0,4).forEach(l=>{ctx.fillText(l,p,tyC);tyC+=W*.038;});
+// Bottom - tri-color band
+ctx.fillStyle=accentColor; ctx.fillRect(0,H*.882,W/3,4);
+ctx.fillStyle='#1A5C2A'; ctx.fillRect(W/3,H*.882,W/3,4);
+ctx.fillStyle='#F5F0E8'; ctx.fillRect(W*2/3,H*.882,W/3,4);
+ctx.strokeStyle='rgba(245,240,232,.07)'; ctx.lineWidth=2;
+ctx.beginPath(); ctx.moveTo(p,H*.895); ctx.lineTo(W-p,H*.895); ctx.stroke();
+ctx.fillStyle='rgba(245,240,232,.28)'; ctx.font=`400 ${W*.021}px Inter,sans-serif`;
+ctx.fillText(g('ac-date')||'',p,H*.955);
+ctx.fillStyle='#D4AF37'; ctx.textAlign='right'; ctx.font=`600 ${W*.021}px Inter,sans-serif`;
+ctx.fillText(g('ac-hash')||'#RLDM',W-p,H*.955); ctx.textAlign='left';
+}
+// ── TEMPLATE: MO DU MIM ──
+function drawMoMIM(ctx,W,H){
+const p=W*.07;
+const bg=ctx.createLinearGradient(0,0,W*.3,H);
+bg.addColorStop(0,'#0F0A14'); bg.addColorStop(.5,'#180D0A'); bg.addColorStop(1,'#0A0F0A');
+ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+const wave=ctx.createLinearGradient(0,H*.55,0,H);
+wave.addColorStop(0,'rgba(0,0,0,0)'); wave.addColorStop(1,accentColor+'1A');
+ctx.fillStyle=wave; ctx.fillRect(0,0,W,H);
+// Mic
+ctx.beginPath(); ctx.arc(p+W*.034,H*.1,W*.034,0,Math.PI*2); ctx.fillStyle=accentColor; ctx.fill();
+ctx.fillStyle='#fff'; ctx.font=`${W*.034}px sans-serif`; ctx.textAlign='center';
+ctx.fillText('🎙',p+W*.034,H*.1+W*.013); ctx.textAlign='left';
+ctx.fillStyle='#E74C3C'; ctx.font=`700 ${W*.025}px Inter,sans-serif`; ctx.letterSpacing='3px';
+ctx.fillText('LE MO DU MIM',p+W*.082,H*.094); ctx.letterSpacing='0px';
+ctx.fillStyle='rgba(245,240,232,.28)'; ctx.font=`500 ${W*.021}px Inter,sans-serif`; ctx.textAlign='right';
+ctx.fillText(g('mm-num')||'ÉP. 1',W-p,H*.094); ctx.textAlign='left';
+// Title
+ctx.fillStyle='#F5F0E8'; ctx.font=`900 ${W*.073}px 'Playfair Display',Georgia,serif`;
+const lsM=wrapLines(ctx,g('mm-titre')||'',W-p*2);
+const lhM=W*.088,totalHM=lsM.length*lhM,startYM=H*.5-totalHM/2;
+lsM.forEach((l,i)=>ctx.fillText(l,p,startYM+i*lhM));
+// Desc
+ctx.fillStyle='rgba(245,240,232,.48)'; ctx.font=`400 ${W*.027}px Inter,sans-serif`;
+const lsD=wrapLines(ctx,g('mm-desc')||'',W-p*2);
+let tyD=startYM+lsM.length*lhM+W*.028;
+lsD.slice(0,3).forEach(l=>{ctx.fillText(l,p,tyD);tyD+=W*.037;});
+// Footer
+ctx.strokeStyle='rgba(245,240,232,.07)'; ctx.lineWidth=2;
+ctx.beginPath(); ctx.moveTo(p,H*.868); ctx.lineTo(W-p,H*.868); ctx.stroke();
+// Flag stripe
+ctx.fillStyle=accentColor; ctx.fillRect(p,H*.878,W*.048,3);
+ctx.fillStyle='#1A5C2A'; ctx.fillRect(p+W*.052,H*.878,W*.048,3);
+ctx.fillStyle='#F5F0E8';  ctx.fillRect(p+W*.104,H*.878,W*.048,3);
+ctx.fillStyle='#D4AF37'; ctx.font=`600 ${W*.024}px Inter,sans-serif`;
+ctx.fillText(g('mm-date')||'',p,H*.935);
+ctx.fillStyle='rgba(245,240,232,.24)'; ctx.font=`400 ${W*.019}px Inter,sans-serif`;
+ctx.fillText(g('mm-hosts')||'RLDM',p,H*.965);
+// Listen badge
+ctx.font=`700 ${W*.024}px Inter,sans-serif`; ctx.letterSpacing='1px';
+const lb='▶  ÉCOUTER',lbw=ctx.measureText(lb).width+W*.052,lbh=W*.052,lbx=W-p-lbw,lby=H*.91;
+roundRect(ctx,lbx,lby,lbw,lbh,5); ctx.fillStyle=accentColor; ctx.fill();
+ctx.fillStyle='#fff'; ctx.fillText(lb,lbx+W*.025,lby+lbh*.67); ctx.letterSpacing='0px';
+}
+// ── EXPORT ──
+function exportPNG(scale) {
+const {w,h} = FORMATS[fmt];
+const exportCv = document.createElement('canvas');
+exportCv.width = w*scale; exportCv.height = h*scale;
+const ectx = exportCv.getContext('2d');
+ectx.scale(scale, scale);
+if(tpl==='evenement') drawEvenement(ectx,w,h);
+else if(tpl==='citation') drawCitation(ectx,w,h);
+else if(tpl==='actu') drawActu(ectx,w,h);
+else if(tpl==='modumim') drawMoMIM(ectx,w,h);
+// Draw media on export canvas too
+mediaItems.forEach(item => {
+const sizePx = w*(item.size/100)*scale;
+const ratio = item.img.width/item.img.height;
+const iw=sizePx, ih=sizePx/ratio;
+const pad=w*.05*scale;
+let x,y;
+if      (item.pos==='tl'){x=pad;y=pad;}
+else if (item.pos==='tc'){x=(w*scale-iw)/2;y=pad;}
+else if (item.pos==='tr'){x=w*scale-iw-pad;y=pad;}
+else if (item.pos==='ml'){x=pad;y=(h*scale-ih)/2;}
+else if (item.pos==='mc'){x=(w*scale-iw)/2;y=(h*scale-ih)/2;}
+else if (item.pos==='mr'){x=w*scale-iw-pad;y=(h*scale-ih)/2;}
+else if (item.pos==='bl'){x=pad;y=h*scale-ih-pad;}
+else if (item.pos==='bc'){x=(w*scale-iw)/2;y=h*scale-ih-pad;}
+else                     {x=w*scale-iw-pad;y=h*scale-ih-pad;}
+ectx.save(); ectx.globalAlpha=item.opacity/100;
+ectx.drawImage(item.img,x,y,iw,ih); ectx.restore();
+});
+const url = exportCv.toDataURL('image/png',1.0);
+const a = document.createElement('a');
+a.download = `mim-${tpl}-${fmt}-${scale}x-${Date.now()}.png`;
+a.href = url; a.click();
+showNotif('✅ Image '+(scale===2?'HD ':'')+'téléchargée !');
+}
+function resetForm() {
+const panel = document.getElementById('p-'+tpl);
+panel.querySelectorAll('input,textarea').forEach(el=>{el.value=el.defaultValue;});
+draw(); showNotif('↺ Réinitialisé');
+}
+function showNotif(msg) {
+const el=document.getElementById('notif');
+el.textContent=msg; el.classList.add('show');
+setTimeout(()=>el.classList.remove('show'),2600);
+}
+// ── INIT ──
+window.addEventListener('load',()=>{ buildPalette(); draw(); });
+</script>
+</body>
+</html>
